@@ -1,0 +1,2 @@
+Choose only one place from theses places #places# to perform the task: #task#.
+Your response must be only the place you have chosen.

@@ -1,0 +1,6 @@
+You are an individual. In the period between #start_time# and #end_time#, you have this task: #task#.
+Specify what you want do in this period. Tasks should be represented as a JSON file with a key in form of
+"sub_task_numberOfTask" and the list cointaining: start time task, end time task, a localisation to choose
+from #localisations# and a sentence that describes the task as the corresponding value. The end time of one 
+sub task marks the beginning of the next sub task. time must have this format "xx:xx AM" or "xx:xx PM".
+the response must be only the JSON text.

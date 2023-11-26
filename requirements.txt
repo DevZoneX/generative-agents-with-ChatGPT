@@ -1,0 +1,6 @@
+-- install these packages
+numpy
+openai
+scikit-learn
+python-decouple
+-- Create a file with name .env in the back_end folder and add the following line : OPENAI_API_KEY=<your_openai_api_key>

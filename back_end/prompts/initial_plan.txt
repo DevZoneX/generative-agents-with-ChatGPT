@@ -1,0 +1,6 @@
+You are an individual with a profile defined by the information in the text delimited by triple backticks #info#.
+Your goal is to create a daily plan starting from the moment you wake up to when you go to sleep.
+Do not exceed ten tasks. Tasks should be represented as a JSON file with a key in form of "task_numberOfTask"
+and a list [start time task, end time task, a sentence that describes the task] as the corresponding
+value. The end time of one task marks the beginning of the next task. time must have this format "xx:xx AM" or
+"xx:xx PM". the response must be only the JSON text.

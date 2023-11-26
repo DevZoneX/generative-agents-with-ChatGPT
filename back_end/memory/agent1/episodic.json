@@ -1,0 +1,114 @@
+{
+    "1": {
+        "timestep": "10h00mins",
+        "expiration": "12h:00mins",
+        "location": "beach",
+        "type": "event",
+        "keywords": [
+            "beach",
+            "swimming",
+            "fun"
+        ],
+        "emotions": "happy",
+        "context": "swimming alone in the beach",
+        "description": "I went to the beach alone to swim and have fun. I built sandcastles and I saw a group of people swimming. I joined them and we had a lot of fun."
+    },
+    "2": {
+        "timestep": "12h:30mins",
+        "expiration": "13h:00mins",
+        "location": "home",
+        "type": "activity",
+        "keywords": [
+            "shower",
+            "lunch",
+            "relax"
+        ],
+        "emotions": "content",
+        "context": "Taking a refreshing shower and having lunch",
+        "description": "After spending a wonderful morning at the beach, I decided to return home. I Took a refreshing shower and had tasty lunch."
+    },
+    "3": {
+        "timestep": "13h:30mins",
+        "expiration": "14h:00mins",
+        "location": "park",
+        "type": "event",
+        "keywords": [
+            "picnic",
+            "nature",
+            "relax"
+        ],
+        "emotions": "calm",
+        "context": "enjoying nature in the park",
+        "description": "After a relaxing afternoon at home, I decided to go to the park for a picnic. I enjoyed the beautiful nature and had a peaceful time."
+    },
+    "4": {
+        "timestep": "14h:30mins",
+        "expiration": "15h:00mins",
+        "location": "movie theater",
+        "type": "activity",
+        "keywords": [
+            "movie",
+            "entertainment",
+            "relax"
+        ],
+        "emotions": "excited",
+        "context": "watching a movie at the theater",
+        "description": "After a peaceful time at the park, I decided to go to the movie theater to watch a new release. I was excited to relax and enjoy the entertainment on the big screen."
+    },
+    "5": {
+        "timestep": "15h:30mins",
+        "expiration": "16h:00mins",
+        "location": "restaurant",
+        "type": "activity",
+        "keywords": [
+            "dinner",
+            "food",
+            "socialize"
+        ],
+        "emotions": "hungry",
+        "context": "having dinner with friends",
+        "description": "After watching the movie, I felt hungry and decided to go to a restaurant with my friends. We had a delicious dinner and enjoyed socializing with each other."
+    },
+    "6": {
+        "timestep": "16h:30mins",
+        "expiration": "17h:00mins",
+        "location": "home",
+        "type": "activity",
+        "keywords": [
+            "relax",
+            "read",
+            "music"
+        ],
+        "emotions": "content",
+        "context": "relaxing at home",
+        "description": "After a satisfying dinner at the restaurant, I returned home to relax. I spent some time reading a book and listening to music, feeling content and at peace."
+    },
+    "7": {
+        "timestep": "17h:30mins",
+        "expiration": "18h:00mins",
+        "location": "gym",
+        "type": "activity",
+        "keywords": [
+            "exercise",
+            "fitness",
+            "health"
+        ],
+        "emotions": "energetic",
+        "context": "working out at the gym",
+        "description": "Feeling energetic after a relaxing time at home, I decided to go to the gym for a workout. I engaged in various exercises to improve my fitness and overall health."
+    },
+    "8": {
+        "timestep": "18h:30mins",
+        "expiration": "19h:00mins",
+        "location": "bookstore",
+        "type": "activity",
+        "keywords": [
+            "books",
+            "reading",
+            "relax"
+        ],
+        "emotions": "calm",
+        "context": "browsing books at the bookstore",
+        "description": "After a workout at the gym, I decided to visit a bookstore. I spent time browsing through different genres of books and found a few interesting ones to read. It was a calming experience."
+    }
+}
