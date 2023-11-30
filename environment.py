@@ -23,7 +23,7 @@ class Map:
     def find_path(self, start, destination):
         find_path(self.grid_roads, start, destination)
 
-    # Get the events nearby the agent
+    # get the events nearby the agent
     def nearby(self, agent):
         nearby(self, agent, radius=5)
     
