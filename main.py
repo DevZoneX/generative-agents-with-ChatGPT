@@ -5,22 +5,21 @@ import time
 
 def main():
     
-    # Initial set up
+    # Initial set up of the environment and the agent and create the initial plan of the day
     env = Environment(min_equivalent_seconds=2)
-    agent = Agent(id='agent1', position=(2,2), localisations=["Jon's bed room", "Jon's kitchen", "Jon's bathroom", "Jon's office in Orange", "Gym"])
+    agent = Agent(id='agent1')
     initial_plan = agent.create_initial_plan()
     
-    # Create sub tasks for task_1 and execute them
+    # Create sub tasks for task_1 and execute them in the back end
     sub_plan_1 = agent.create_sub_plan(1)
     
     task_1 = initial_plan[f'task_{1}']
     print(f'---------- Executing task {1}: {task_1[0]}, {task_1[1]}, {task_1[2]} ---------- \n')
 
-    # Execute sub tasks for task_1
     for j in range(1, len(sub_plan_1)+1):
         key = f'sub_task_{j}'
         print(f'---------- Executing sub task {j}: {sub_plan_1[key][0]}, {sub_plan_1[key][1]}, {sub_plan_1[key][2]}, {sub_plan_1[key][3]}---------- \n')
-        #agent.execute_sub_task(start = sub_plan_1[key][0], end = sub_plan_1[key][1], localisation = sub_plan_1[key][2], task = sub_plan_1[key][3], environment = env)
+        agent.execute_sub_task(start = sub_plan_1[key][0], end = sub_plan_1[key][1], localisation = sub_plan_1[key][2], task = sub_plan_1[key][3], environment = env)
     time.sleep(20)
     
     # Create sub tasks for the rest of the tasks

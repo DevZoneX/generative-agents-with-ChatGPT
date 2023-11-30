@@ -1,4 +1,6 @@
 back_end/.env
 __ pycache__
 back_end/__pycache__
+back_end/agent/__pycache__
+back_end/map/__pycache__
 psc

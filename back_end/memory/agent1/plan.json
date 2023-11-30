@@ -1,1 +1,72 @@
-{"task_1": ["07:00 AM", "07:30 AM", "Morning Exercise", {"sub_task_1": ["07:00 AM", "07:10 AM", "Jon's bedroom", "Stretching exercises"], "sub_task_2": ["07:10 AM", "07:20 AM", "Jon's bedroom", "Yoga session"], "sub_task_3": ["07:20 AM", "07:30 AM", "Jon's bedroom", "Meditation"]}], "task_2": ["07:30 AM", "08:00 AM", "Shower and get ready for work"], "task_3": ["08:00 AM", "09:00 AM", "Commute to work"], "task_4": ["09:00 AM", "12:00 PM", "Work at Orange"], "task_5": ["12:00 PM", "01:00 PM", "Lunch break"], "task_6": ["01:00 PM", "05:00 PM", "Work at Orange"], "task_7": ["05:00 PM", "06:00 PM", "Gym workout"], "task_8": ["06:00 PM", "07:00 PM", "Dinner"], "task_9": ["07:00 PM", "09:00 PM", "Relax and unwind"], "task_10": ["09:00 PM", "11:00 PM", "Prepare for bed and wind down"]}
+{
+    "task_1": [
+        "07:00 AM",
+        "07:30 AM",
+        "Morning Exercise",
+        {
+            "sub_task_1": [
+                "07:00 AM",
+                "07:10 AM",
+                "Jon's bedroom",
+                "Stretching exercises"
+            ],
+            "sub_task_2": [
+                "07:10 AM",
+                "07:20 AM",
+                "Jon's bedroom",
+                "Yoga session"
+            ],
+            "sub_task_3": [
+                "07:20 AM",
+                "07:30 AM",
+                "Jon's bedroom",
+                "Meditation"
+            ]
+        }
+    ],
+    "task_2": [
+        "07:30 AM",
+        "08:00 AM",
+        "Shower and get ready for work"
+    ],
+    "task_3": [
+        "08:00 AM",
+        "09:00 AM",
+        "Commute to work"
+    ],
+    "task_4": [
+        "09:00 AM",
+        "12:00 PM",
+        "Work at Orange"
+    ],
+    "task_5": [
+        "12:00 PM",
+        "01:00 PM",
+        "Lunch break"
+    ],
+    "task_6": [
+        "01:00 PM",
+        "05:00 PM",
+        "Work at Orange"
+    ],
+    "task_7": [
+        "05:00 PM",
+        "06:00 PM",
+        "Gym workout"
+    ],
+    "task_8": [
+        "06:00 PM",
+        "07:00 PM",
+        "Dinner"
+    ],
+    "task_9": [
+        "07:00 PM",
+        "09:00 PM",
+        "Relax and unwind"
+    ],
+    "task_10": [
+        "09:00 PM",
+        "11:00 PM",
+        "Prepare for bed and wind down"
+    ]
+}

@@ -67,14 +67,15 @@ def execute_sub_task(agent, start, end, destination_localisation, task, environm
     current_localisation = map.get_localisation(agent)
     
     if current_localisation == destination_localisation:
+        map.remove_event(agent.current_event, agent.position)
         map.add_event([task, start, end], agent.position)
-        environment.add_configuration_to_the_queue([task, start, end])
+        environment.add_configuration_to_the_queue([task, start, end, 'STAY'])
         
     else:
         destinations = map.get_coordinates(destination_localisation)
         
         for x, y in destinations:
-            if map.grid_roads[x, y] == 0:
+            if map.grid_roads[x, y] != 0:
                 x1 = x
                 y1 = y
                 break
