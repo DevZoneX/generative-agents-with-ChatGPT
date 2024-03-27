@@ -1,6 +1,9 @@
 back_end/.env
-__ pycache__
-back_end/__pycache__
-back_end/agent/__pycache__
-back_end/map/__pycache__
+__pycache__/
 psc
+.env
+test.py
+configuration.json
+back_end/memory
+
+dataTypes.txt

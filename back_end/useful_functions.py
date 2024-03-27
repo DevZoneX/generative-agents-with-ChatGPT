@@ -1,46 +1,225 @@
-#from sentence_transformers import SentenceTransformer
-#from sklearn.metrics.pairwise import cosine_similarity
+from sentence_transformers import SentenceTransformer
+import networkx as nx
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 import openai
+# from mistralai.client import MistralClient, ChatMessage
+import json
 from decouple import config
-import time
+from datetime import datetime, timedelta
+import numpy as np
+
+# MISTRAL_API_KEY = config("MISTRAL_API_KEY")
+OPENAI_API_KEY = config("OPENAI_API_KEY")
+client = openai.OpenAI(api_key=OPENAI_API_KEY)
+# mistral_client = MistralClient(api_key=MISTRAL_API_KEY)
+
 
 # Get completion
-OPENAI_API_KEY = config("OPENAI_API_KEY")
-openai.api_key  = OPENAI_API_KEY
-def get_completion(messages, model="gpt-3.5-turbo", max_tokens=200, temperature=0):
-    response = openai.ChatCompletion.create(
-        model=model,
-        messages=messages,
-        temperature=temperature,
-        max_tokens=max_tokens,
-    )
-    return response.choices[0]['message']['content']
+def get_completion(messages, model="gpt-3.5-turbo-1106", max_tokens=500, temperature=0, ai="chatgpt", format=None):
+    if ai == "chatgpt":
+        if format == None:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+        else:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                response_format=format,
+                max_tokens=max_tokens,
+            )
+
+    elif ai == "mistral":
+
+        messages = [ChatMessage(
+            role=message["role"], content=message["content"]) for message in messages]
+        response = mistral_client.chat(
+            messages=messages,
+            model="mistral-small",
+            temperature=temperature,
+        )
+    assistant_reply = response.choices[0].message.content
+    return assistant_reply
+
 
 # Get similarity between two sentences
-'''
-model = SentenceTransformer('bert-base-nli-mean-tokens')
-def get_similarity(txt1, txt2):
-    txt1_embeddings = model.encode(txt1, convert_to_tensor=True)
-    txt2_embeddings = model.encode(txt2, convert_to_tensor=True)
-    
-    txt1_embeddings = np.array(txt1_embeddings).reshape(1, -1)
-    txt2_embeddings = np.array(txt2_embeddings).reshape(1, -1)
+"""def get_similarity(txt1_embeddings, txt2_embeddings):
+    dot_product = np.dot(np.array(txt1_embeddings), np.array(txt2_embeddings).T)
+    norm_txt1_embeddings = np.linalg.norm(txt1_embeddings)
+    norm_txt2_embeddings = np.linalg.norm(txt2_embeddings)
 
-    similarity = cosine_similarity(txt1_embeddings, txt2_embeddings)
-    return similarity[0][0]
-'''
+    similarity = dot_product / (norm_txt1_embeddings * norm_txt2_embeddings)
+    return similarity"""
 
-# Get the duration of a task
+
+def get_similarity(txt1_embeddings, txt2_embeddings):
+    return cosine_similarity(txt1_embeddings, txt2_embeddings)
+
+
+# Get the embedding of a sentence
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
+
+def get_embedding(txt1):
+    '''
+    INTPUT: txt1: string
+    OUTPUT: txt1_embeddings: numpy array
+    '''
+    txt1_embeddings = model.encode(txt1)
+
+    return txt1_embeddings
+
+
+def add_episodic(agent, event, time, importance):
+    '''
+    INTPUT: agent, event
+    OUTPUT: None
+    '''
+    file_dir = f"back_end/memory/{agent.name}/episodic.json"
+    embeddings = get_embedding(event)
+
+    if agent.first_time:
+        data = {"embeddings": {}, "node": []}
+        agent.first_time = False
+    else:
+        with open(file_dir, 'r') as json_file:
+            data = json.load(json_file)
+
+    data["embeddings"][event] = embeddings.tolist()
+    data["node"].append([time, event, importance])
+
+    with open(file_dir, 'w') as outfile:
+        json.dump(data, outfile, indent=4)
+
+
+def retrieve_episodic(agent, context, n=5):
+    '''
+    INTPUT: agent, context
+    OUTPUT: list of n events
+    '''
+    file_dir = f"back_end/memory/{agent.name}/episodic.json"
+    with open(file_dir, 'r') as json_file:
+        data = json.load(json_file)
+    embeddings = data["embeddings"]
+    node = np.array(data["node"])
+    context_embeddings = get_embedding([context])
+
+    similarity = cosine_similarity(
+        list(embeddings.values()), context_embeddings)
+
+
+    index = np.argsort(similarity, axis=0)[-n:]
+
+    # Adjust n to the actual number of elements that can be retrieved
+    n = min(len(index),n)
+
+    results = [(node[i][1], node[i][2]) for i in range(n)]
+
+    return results
+
+
+def visualize_embeddings(file_path):
+    """
+    Creates and displays a graph visualizing the cosine similarity between multiple event embeddings.
+    """
+    threshold = 0.3
+    try:
+        with open(file_path + 'episodic.json', 'r') as json_file:
+            data = json.load(json_file)
+            embeddings = data["embeddings"]
+    except FileNotFoundError:
+        print(f"file {file_path} cannot be found")
+        return
+    # Create an empty graph
+    G = nx.Graph()
+
+    # Add nodes for each event
+    for event in embeddings.keys():
+        G.add_node(event)
+
+    # Calculate cosine similarity between each pair of embeddings and add an edge if the similarity is high enough
+    event_names = list(embeddings.keys())
+    for i in range(len(event_names)):
+        for j in range(i + 1, len(event_names)):
+            event_i = event_names[i]
+            event_j = event_names[j]
+            similarity = cosine_similarity([embeddings[event_i]], [
+                                           embeddings[event_j]])[0][0]
+            similarity = round(similarity, 2)
+            G.add_edge(event_i, event_j, weight=similarity)
+
+    pos = nx.spring_layout(G)
+
+    # Dessinez seulement les nœuds
+    nx.draw_networkx_nodes(G, pos, node_color='skyblue', node_size=2500)
+
+    # Filtrer et dessiner uniquement les arêtes qui respectent le seuil
+    edges_to_draw = [(u, v) for u, v, d in G.edges(
+        data=True) if d['weight'] > threshold]
+    weights = [G[u][v]['weight'] * 10 for u, v in edges_to_draw]
+    nx.draw_networkx_edges(G, pos, edgelist=edges_to_draw,
+                           width=weights, edge_color=weights, edge_cmap=plt.cm.Blues)
+
+    # Dessiner les labels séparément
+    nx.draw_networkx_labels(G, pos, font_size=9)
+
+    edge_labels = {(u, v): d['weight'] for u, v, d in G.edges(
+        data=True) if d['weight'] > threshold}
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+
+    plt.title('Cosine Similarity Network of Events')
+    plt.axis('off')  # Cache les axes pour une meilleure visibilité
+    plt.show()
+
+
+# Get the duration of a task in minutes
 def get_duration(start, end):
+    '''
+    INPUT:
+        start: 'hh:mm AM/PM'
+        end: 'hh:mm AM/PM'
+    OUTPUT:
+        minutes: int
+    '''
+    if len(start) == 7:
+        start = "0" + start
+    if len(end) == 7:
+        end = "0" + end
+
     if start[6:] == end[6:]:
-        minutes = int(end[:2])*60 + int(end[3:5]) - int(start[:2])*60 - int(start[3:5])
+        minutes = int(end[:2])*60 + int(end[3:5]) - \
+            int(start[:2])*60 - int(start[3:5])
         return minutes
     elif start[6:] == "AM" and end[6:] == "PM":
-        minutes = (12 - int(start[:2]))*60 - int(start[3:5]) + int(end[:2])*60 + int(end[3:5])
+        minutes = (12 - int(start[:2]))*60 - \
+            int(start[3:5]) + int(end[:2])*60 + int(end[3:5])
         return minutes
-    
-def time_decrease(period):
-    for i in range(1, period):
-        print(f"Countdown: {period-i}", end='\r')
-        time.sleep(1)
-        print(" " * len(f"Countdown: {period-i}"), end='\r')
+
+# Get the time in the format 'hh:mm AM/PM' after adding minutes to a time in the same format
+
+
+def add_minutes_to_time(time_str, minutes):
+    '''
+    INTPUT:
+        time_str: 'hh:mm AM/PM'
+        minutes: int
+    OUTPUT:
+        result_time_str: 'hh:mm AM/PM'
+    '''
+    # Parse the INTPUT time string
+    time_format = '%I:%M %p'
+    base_time = datetime.strptime(time_str, time_format)
+
+    # Calculate the new time by adding the duration
+    new_time = base_time + timedelta(minutes=minutes)
+
+    # Format the result as 'hh:mm AM/PM'
+    result_time_str = new_time.strftime(time_format)
+
+    return result_time_str

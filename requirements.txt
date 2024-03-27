@@ -1,6 +1,9 @@
--- install these packages
-numpy
-openai==0.28
-scikit-learn
-python-decouple
+-- install these packages using pip install <package_name>
+sentence-transformers==2.5.1
+numpy==1.26.4
+openai==1.13.3
+python-decouple==3.8
+pygame
+pytmx
+
 -- Create a file with name .env in the back_end folder and add the following line : OPENAI_API_KEY=<your_openai_api_key>

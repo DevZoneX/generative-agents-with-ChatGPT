@@ -1,12 +1,27 @@
 import json
 import numpy as np
+from multiprocessing import Queue
 
-# Get path from start to destination
-def find_path(start, destination, grid_roads):
+'''
+Here is some auxilary functions that help to get works done, but not important in the whole project.
+'''
+
+
+def find_path(grid_roads, start, destination):
     '''
-    A* algorithm: it returns the path from start to destination both included. 0 represents a road and 1 represents a wall
-    input: start, destination, grid_roads
-    output: A list of coordinates from start to destination both included
+
+    A* algorithm: it returns the path from start to destination only destination included. 0 represents a road and 1 represents a wall
+
+    INPUT : 
+
+    grid_roads : a np 2d array consists of 0 or non-zero numbers indicating where the roads are
+    start : (x1, y1) indicating the starting point
+    destination : (x2, y2) indicating the destination point
+
+    OUTPUT: 
+
+    path: A list of coordinates (x, y) from start to destination, only destination included
+   
     '''
     
     directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
@@ -19,9 +34,9 @@ def find_path(start, destination, grid_roads):
     def astar(grid_roads, start, end):
         stack = [start]
         origin = {}
-        g_score = {(x, y): float('inf') for x in range(len(grid_roads)) for y in range(len(grid_roads[0]))}
+        g_score = {(x, y): float('inf') for x in range(grid_roads.shape[0]) for y in range(grid_roads.shape[1])}
         g_score[start] = 0
-        f_score = {(x, y): float('inf') for x in range(len(grid_roads)) for y in range(len(grid_roads[0]))}
+        f_score = {(x, y): float('inf') for x in range(grid_roads.shape[0]) for y in range(grid_roads.shape[1])}
         f_score[start] = heuristic(start, end)
 
         while stack:
@@ -41,9 +56,9 @@ def find_path(start, destination, grid_roads):
                 neighbor = (x + direction[0], y + direction[1])
 
                 if (
-                    0 <= neighbor[0] < len(grid_roads) and
-                    0 <= neighbor[1] < len(grid_roads[0]) and
-                    grid_roads[neighbor[0]][neighbor[1]] == 0
+                    0 <= neighbor[0] < grid_roads.shape[0] and
+                    0 <= neighbor[1] < grid_roads.shape[1] and
+                    grid_roads[neighbor[0]][neighbor[1]] != 0
                 ):
                     tentative_g_score = g_score[current] + 1
 
@@ -59,53 +74,103 @@ def find_path(start, destination, grid_roads):
 
     return astar(grid_roads, start, destination)
 
-# Get the events nearby the agent
-def nearby(map, agent, radius=5):
+
+def nearby_events(map, agent_name, position, radius=5):
     '''
     Get the events nearby the agent in a block of radius
-    input: map, agent, radius
-    output: a list of events
+
+    INPUT: 
+
+    map: classe map
+    agent: string agent name
+    position: tuple (x, y)
+    radius: int
+
+    OUTPUT: 
+
+    a set of events nearby the agent
     '''
-    x = agent.position[0]
-    y = agent.position[1]
-    agent_building = map.case_details[x, y]["building"]
-    events = []
+    x = position[0]
+    y = position[1]
+    cases_matrix = map.case_details.get()
+    map.case_details.put(cases_matrix)
+    case = cases_matrix[x][y]
+    agent_building = case["building"]
+
+    events = set()
 
     for i in range(x - radius, x + radius + 1):
         for j in range(y - radius, y + radius + 1):
-            if 0 <= i < map.length and 0 <= j < map.width:
-                if map.case_details[i, j]["building"] == agent_building:
-                        for event in map.case_details[i, j]["events"]:
-                            events.append([event, (i, j)])
+            if 0 <= i < map.height and 0 <= j < map.width:
+                case = cases_matrix[i][j]
+                if case["building"] == agent_building:
+                    for event in case["events"]:
+                        events.add(event)
+    
     return events
 
-# Get the localisation of the agent
-def get_localisation(map, agent):
-    '''
-    Get the localisation of the agent
-    input: map, agent
-    output: localisation in the form of building:hall:object
-    '''
-    x = agent.position[0]
-    y = agent.position[1]
-    localisation = map.case_details[x, y]["building"]
-    if map.case_details[x, y]["hall"] != None:
-        localisation += ":" + map.case_details[x, y]["hall"]
-        if map.case_details[x, y]["object"] != None:
-            localisation += ":" + map.case_details[x, y]["object"]
-    return localisation
 
-# Prepare on process the map
+def nearby_agents(map, agent_name, position, radius=1):
+    '''
+    Get the agents nearby the agent in a block of radius
+
+    INPUT: 
+    
+    map: class map
+    agent_name: string agent name
+    position: tuple (x,y)
+    radius: int
+
+    OUTPUT: 
+    a set of agents nearby the agent without the agent 
+    '''
+    x = position[0]
+    y = position[1]
+    
+    cases_matrix = map.case_details.get()
+    map.case_details.put(cases_matrix)
+    case = cases_matrix[x][y]
+
+    agents = set()
+
+    for i in range(max(x-radius, 0), min(x+radius+1, map.height)):
+        for j in range(max(0, y-radius), min(y+radius+1, map.width)):
+            case = cases_matrix[i][j]
+            for agent in case["agents"]:
+                if agent != agent_name and agent not in  [event.split(",")[0] for event in case["events"] ]:
+                    agents.add(map.agents[agent])
+    return agents
+
+
+# Not used
+def activate_perceive(map, agent):
+    '''
+    looks for all the agents in a block of radius 5 cases around the position specified
+    and activate their perceive function
+    '''
+    near_agents = nearby_agents(map, agent.name, agent.position)
+    for near_agent in near_agents:
+        if near_agent.name != agent.name:
+            near_agent.perceive(map)
+
+
 def prepare_map(map_file="back_end/map/map.json"):
     '''
     Prepare the map: Generate the case_details, map_dict, coordinates and grid_roads
-    input: map_file
-    output:
-        case_details: a 2D array of dictionaries, each dictionary contains the details of a case
-        map_dict: a dictionary of dictionaries, each dictionary contains the objects in a hall
-            example: {"building":{"hall_1":{"object_1","object_2"},"hall_2":{"object_3"}}}
-        coordinates: a dictionary of sets, each set contains the coordinates of a place
-        grid_roads: a 2D array of integers, each integer represents 1 if the case is a road and 0 otherwise
+    INPUT: 
+
+    map_file
+
+    OUTPUT:
+
+    width: int
+    height: int
+    case_details: a 2D array of dictionaries, each dictionary contains the details of a case
+    map_dict: a dictionary of dictionaries, each dictionary contains the objects in a hall
+        example: {"building":{"hall_1":{"object_1","object_2"},"hall_2":{"object_3"}}}
+    coordinates: a dictionary of sets, each set contains the coordinates of a localisation 
+        either is type uiding, building:hall or building:hall:object
+    grid_roads: a np 2D array of integers, each integer represents 1 if the case is a road and 0 otherwise
     '''
     
     with open(map_file) as json_file:
@@ -113,19 +178,34 @@ def prepare_map(map_file="back_end/map/map.json"):
         json_file.close()
 
     height, width, tilewidth = data["height"], data["width"], data["tilewidth"]
-
-    # initialize the details of each case
-    case_details = np.array([[{"building":None,"events":set(),"agents":set(),"hall":None,"object":None} for i in range(width)] for j in range (height)],dtype=dict)
     
     # map to dict : building -> hall -> object
+    case_details = Queue()
+    cases_matrix = [[dict() for i in range(width)] for j in range(width)]
+    for i in range(height):
+        for j in range(width):
+            cases_matrix[i][j] = {"building":None, "hall":None, "object":[], "agents":[], "events":[]}
+    
+    case_details.put(cases_matrix)
+    
     # example: {"building":{"hall_1":{"object_1","object_2"},"hall_2":{"object_3"}}}
     map_dict = dict()
     
     layers = data["layers"]
     
     # get the grid_roads
-    grid_roads = layers[0]["data"]
-    
+    for layer in layers:
+        layer_name = layer["name"]
+        if layer_name == "road":
+            grid = layer["data"]
+        if layer_name == "Building":
+            Buildings = layer["objects"]
+        if layer_name == "Hall":
+            Halls = layer["objects"]
+        if layer_name == "Object":
+            objects = layer["objects"]
+    grid_roads = np.array([[grid[i+j*width] for i in range(width)] for j in range(height)])
+        
     # convert pixels to cases
     def get_cases(x, y, width, height): 
         xmin=int(x/tilewidth)
@@ -139,46 +219,72 @@ def prepare_map(map_file="back_end/map/map.json"):
         return cases
     
     # update the case details with the places and objects from the json file 
-    for layer in layers:
-        layer_name = layer["name"]
-        if layer_name in ["places","objets with reactions"]:
-            places = layer["objects"]
-            for place in places:
-                x=place["x"]
-                y=place["y"]
-                width_=place["width"]
-                height_=place["height"]
-                name = place["name"]
-                cases = get_cases(x, y, width_, height_)
-                if layer_name == "places":
-                    for case in cases:
-                        case_details[case[0],case[1]]["building"]= name
-                        case_details[case[0],case[1]]["hall"]= name
-                elif layer_name == "objets with reactions":
-                    for case in cases:
-                        case_details[case[0],case[1]]["object"] = name
+    Instances = [Buildings, Halls, objects]
+    cases_matrix = case_details.get()
+
+    for i in range(len(Instances)):
+        for instance in Instances[i]:
+            x = instance["x"]
+            y = instance["y"]
+            width_ = instance["width"]
+            height_ = instance["height"]
+            cases = get_cases(x, y, width_, height_)
+            if i == 0:
+                for case in cases:
+                    tile = cases_matrix[case[0]][case[1]]
+                    tile["building"] = instance["name"]
+                    cases_matrix[case[0]][case[1]] = tile
+            elif i == 1:
+                for case in cases:
+                    tile = cases_matrix[case[0]][case[1]]
+                    tile["hall"] = instance["name"]
+                    cases_matrix[case[0]][case[1]] = tile
+            elif i == 2:
+                for case in cases:
+                    tile = cases_matrix[case[0]][case[1]]
+                    tile["object"].append(instance["name"])
+                    cases_matrix[case[0]][case[1]] = tile
+
+    case_details.put(cases_matrix)
+    
 
     # update the building dict
+    cases_matrix = case_details.get()
+    case_details.put(cases_matrix)
+
     for i in range(height):
         for j in range(width):
-            building = case_details[i,j]["building"]
-            hall = case_details[i,j]["hall"]
-            object = case_details[i,j]["object"]
-            if building is not None:
-                if building not in map_dict.keys():
-                    map_dict[building] = dict()
-                if hall not in map_dict[building].keys():
-                    map_dict[building][hall] = set()
-                if object is not None:
-                    map_dict[building][hall].add(object)
+                case = cases_matrix[i][j]
+                building = case["building"]
+                hall = case["hall"]
+                objects = case["object"]
+                if building is not None:
+                    if building not in map_dict.keys():
+                        map_dict[building] = dict()
+                    if hall is not None: 
+                        if hall not in map_dict[building].keys():
+                            map_dict[building][hall] = set()
+                        if len(objects) != 0:
+                            for object in objects:
+                                map_dict[building][hall].add(object)
+                    
+    # Create a list that contains all the possible localisations in form of building:hall and building:hall:object
+    localisations = dict()
+    for building in map_dict.keys():
+        for hall in map_dict[building]:
+            localisations[building+":"+hall] = map_dict[building][hall]
 
-    # Coordinates of each place
+    # Coordinates of each place in form of building, building:hall and building:hall:object containing the coordinates (i,j) of the place in the map
+    cases_matrix = case_details.get()
+    case_details.put(cases_matrix)
+
     coordinates = dict()
-    for i in range(width):
-        for j in range(height):
-            building = case_details[i,j]["building"]
-            hall = case_details[i,j]["hall"]
-            object = case_details[i,j]["object"]
+    for i in range(height):
+        for j in range(width):
+            case = cases_matrix[i][j]
+            building = case["building"]
+            hall = case["hall"]
+            objects = case["object"]
             if building != None:
                 if building not in coordinates:
                     coordinates[building] = {(i,j)}
@@ -189,17 +295,11 @@ def prepare_map(map_file="back_end/map/map.json"):
                         coordinates[building+":"+hall] = {(i,j)}
                     else :
                         coordinates[building+":"+hall].add((i,j))
-                    if object != None:
-                        if building+":"+hall+":"+object not in coordinates:
-                            coordinates[building+":"+hall+":"+object] = {(i,j)}
-                        else :
-                            coordinates[building+":"+hall+":"+object].add((i,j))
-    
-    return case_details, map_dict, coordinates, grid_roads
+                    if len(objects) != 0:
+                        for object in objects:
+                            if building+":"+hall+":"+object not in coordinates:
+                                coordinates[building+":"+hall+":"+object] = {(i,j)}
+                            else :
+                                coordinates[building+":"+hall+":"+object].add((i,j))
 
-case_details, map_dict, coordinates, grid_roads = prepare_map()
-'''
-for i in range(20):
-    for j in range(20):
-        print(case_details[i,j])
-'''
+    return width, height, case_details, coordinates, grid_roads, localisations

@@ -1,56 +1,78 @@
+# For development purpose
+from test_fcts import run_front_end_test, read_initial_plan
+
+import multiprocessing
+import concurrent.futures
 from agent import Agent
 from environment import Environment
-from multiprocessing import Process
-import time
+from back_end.run_back_end import run_back_end
+from front_end.run_front_end import run_front_end
 
-def main():
-    
-    # Initial set up of the environment and the agent and create the initial plan of the day
-    env = Environment(min_equivalent_seconds=2)
-    agent = Agent(id='agent1')
+
+def create_agent(agent_name, env):
+    '''
+    This function is used to create an agent and add it to the map.
+    '''
+    agent = Agent(name=agent_name)
+    env.map.agents[agent_name] = agent
+
+    # Update the case details of the map
+    cases_matrix = env.map.case_details.get()
+    case = cases_matrix[agent.position[0]][agent.position[1]]
+    case["agents"].append(agent.name)
+    cases_matrix[agent.position[0]][agent.position[1]] = case
+    env.map.case_details.put(cases_matrix)
+
+    # Create a queue of configurations for the agent
+    env.queue_of_configurations[agent_name] = multiprocessing.Manager().list()
+
+    # uplaod or create the initial plan of the day
+    #initial_plan = read_initial_plan(agent.file_path+'plan.json')
     initial_plan = agent.create_initial_plan()
-    
-    # Create sub tasks for task_1 and execute them in the back end
-    sub_plan_1 = agent.create_sub_plan(1)
-    
-    task_1 = initial_plan[f'task_{1}']
-    print(f'---------- Executing task {1}: {task_1[0]}, {task_1[1]}, {task_1[2]} ---------- \n')
+    return agent, initial_plan
 
-    for j in range(1, len(sub_plan_1)+1):
-        key = f'sub_task_{j}'
-        print(f'---------- Executing sub task {j}: {sub_plan_1[key][0]}, {sub_plan_1[key][1]}, {sub_plan_1[key][2]}, {sub_plan_1[key][3]}---------- \n')
-        agent.execute_sub_task(start = sub_plan_1[key][0], end = sub_plan_1[key][1], localisation = sub_plan_1[key][2], task = sub_plan_1[key][3], environment = env)
-    time.sleep(20)
-    
-    # Create sub tasks for the rest of the tasks
-    def create_all_sub_tasks():
-        for i in range(2, 3):
-            # Create sub tasks for task_i and return them
-            sub_plan_i = agent.create_sub_plan(i)
-
-            task_i = initial_plan[f'task_{i}']
-            print(f'---------- Executing task {i}: {task_i[0]}, {task_i[1]}, {task_i[2]} ---------- \n')
-
-            # Execute sub tasks for task_i
-            for j in range(1, len(sub_plan_i)+1):
-                key = f'sub_task_{j}'
-                print(f'---------- Executing sub task {j}: {sub_plan_i[key][0]}, {sub_plan_i[key][1]}, {sub_plan_i[key][2]}, {sub_plan_i[key][3]}---------- \n')
-                #agent.execute_sub_task(start = sub_plan_i[key][0], end = sub_plan_i[key][1], localisation = sub_plan_i[key][2], task =sub_plan_i[key][3], map=env.map)
-            time.sleep(20)
-    
-    # Run the environment
-    def run_enviroment():
-        print('---------- Running the environment ---------- \n')
-    
-    # Start the simulation on two different processes running in parallel
-    process1 = Process(target=create_all_sub_tasks)
-    process2 = Process(target=run_enviroment)
-
-    process1.start()
-    process2.start()
-
-    process1.join()
-    process2.join()
 
 if __name__ == "__main__":
-    main()
+
+    print('-----------------------Set up begins----------------------- \n')
+    env = Environment()
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        # Submit tasks to create agents in parallel
+        future1 = executor.submit(create_agent, "John", env)
+        future2 = executor.submit(create_agent, 'James', env)
+        future3 = executor.submit(create_agent, 'Elsa', env)
+
+        # Retrieve results
+        agent1, initial_plan1 = future1.result()
+        agent2, initial_plan2 = future2.result()
+        agent3, initial_plan3 = future3.result()
+    print(f'-----------------------Set up finished -----------------------\n')
+
+    # Create a barrier for synchronizing the processes
+    barrier = multiprocessing.Barrier(4)
+    
+    # Create a lock for the environment
+    lock = multiprocessing.Lock()
+
+    agents = [agent1, agent2, agent3]
+    # Clean files
+    agent1.delete()
+    agent2.delete()
+    agent3.delete()
+    
+    initial_plans = [initial_plan1, initial_plan2, initial_plan3]
+    processes = []
+
+    for agent, initial_plan in zip(agents, initial_plans):
+        process = multiprocessing.Process( target=run_back_end, args=(env, agent, initial_plan, barrier, lock) )
+        processes.append(process)
+        process.start()
+
+    # change the run_front_end_test to run_front_end to run the pygame front end
+    front_end_process = multiprocessing.Process( target=run_front_end, args=(env, barrier) )
+    processes.append(front_end_process)
+    front_end_process.start()
+
+    # Wait for all processes to finish
+    for process in processes:
+        process.join()
