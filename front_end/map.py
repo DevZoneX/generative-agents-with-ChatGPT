@@ -46,7 +46,7 @@ class Pygame_Map():
         for obj,i in zip(self.map_tmx.get_layer_by_name("agents"), range(len(self.map_tmx.get_layer_by_name("agents")))):
             person_image = self.map_tmx.get_tile_image_by_gid(obj.gid)
             if person_image : 
-                person = Person(obj.name, obj.x, obj.y,person_image, self)
+                person = Person(obj.name,obj.x,obj.y ,person_image, self)
                 button = Agent_Button(i, person)
                 persons.add(person)
                 buttons.add(button)
@@ -83,8 +83,9 @@ class Camera:
         Zoom in and zoom out with mouse wheel
 
         """
+        pos = pygame.mouse.get_pos()
         for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN and (self.target == None or pos[0] < screen_width - 48*5):
                 if event.button == 4:
                     self.map.scale_factor = min(1, self.map.scale_factor + 0.05)
                 if event.button == 5:

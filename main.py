@@ -41,35 +41,48 @@ if __name__ == "__main__":
         future1 = executor.submit(create_agent, "John", env)
         future2 = executor.submit(create_agent, 'James', env)
         future3 = executor.submit(create_agent, 'Elsa', env)
+        future4 = executor.submit(create_agent, "Tom", env)
+        future5 = executor.submit(create_agent, 'Alice', env)
+        future6 = executor.submit(create_agent, 'Sara', env)
 
         # Retrieve results
         agent1, initial_plan1 = future1.result()
         agent2, initial_plan2 = future2.result()
         agent3, initial_plan3 = future3.result()
+        agent4, initial_plan4 = future4.result()
+        agent5, initial_plan5 = future5.result()
+        agent6, initial_plan6 = future6.result()
+
     print(f'-----------------------Set up finished -----------------------\n')
 
     # Create a barrier for synchronizing the processes
-    barrier = multiprocessing.Barrier(4)
-    
+    barrier = multiprocessing.Barrier(7)
+
     # Create a lock for the environment
     lock = multiprocessing.Lock()
 
-    agents = [agent1, agent2, agent3]
+    agents = [agent1, agent2, agent3, agent4, agent5, agent6]
     # Clean files
     agent1.delete()
     agent2.delete()
     agent3.delete()
-    
-    initial_plans = [initial_plan1, initial_plan2, initial_plan3]
+    agent4.delete()
+    agent5.delete()
+    agent6.delete()
+
+    initial_plans = [initial_plan1, initial_plan2,
+                     initial_plan3, initial_plan4, initial_plan5, initial_plan6]
     processes = []
 
     for agent, initial_plan in zip(agents, initial_plans):
-        process = multiprocessing.Process( target=run_back_end, args=(env, agent, initial_plan, barrier, lock) )
+        process = multiprocessing.Process(
+            target=run_back_end, args=(env, agent, initial_plan, barrier, lock))
         processes.append(process)
         process.start()
 
     # change the run_front_end_test to run_front_end to run the pygame front end
-    front_end_process = multiprocessing.Process( target=run_front_end, args=(env, barrier) )
+    front_end_process = multiprocessing.Process(
+        target=run_front_end, args=(env,lock, barrier))
     processes.append(front_end_process)
     front_end_process.start()
 

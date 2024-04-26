@@ -20,16 +20,22 @@ class Personality:
                         "Agreeableness": [self.personnality[3]],
                         "Conscientiousness": [self.personnality[4]]}
 
-    # Print the personality. To use for CHATGPT.
     def print_personality(self):
+        '''
+        INPUT: None
+        OUTPUT: the current personality of the agent in a string format
+        '''
         personnalities = ["Neuroticism", "Extraversion",
                           "Openness", "Agreeableness", "Conscientiousness"]
         desc = ', '.join(f"{personnality} {value}" for personnality, value in zip(
             personnalities, self.personnality))
         return ("According to the Big Five, here is they current personality: (0 means the personality trait is not present, 1O means it is strongly present) - " + desc + ".")
 
-    # Given the CHATGPT response it updates the personality. Used in the update function.
     def update_personality_resp(self, response, agent_name):
+        '''
+        INPUT: response, agent_name
+        OUTPUT: update the personality of the agent after an event STEP 1
+        '''
         if response == 'False':
             return False
         else:
@@ -57,8 +63,11 @@ class Personality:
                     self.personnality = new_values
                 return True
 
-    # Given the agent and an event. If the importance of an event is above the threshold, this fonction update the personality.
     def update_personality(self, agent, event):
+        '''
+        INPUT: agent, event
+        OUTPUT: update the personality of the agent after an event STEP 2
+        '''
         prompt_personality = f"I am trying to model the personality of a NPC named {agent.name} from a video game. Here's the event that just happened in the life of this NPC: {event}"+agent.emotion.print_emotions()+agent.personality.print_personality(
         )+"Should we change the personality? If no, simply respond with False. If yes, modify the emotion values I provided above and give them to me in the following format, separated by &&:\n&&\nTrue\nt\n&&\n, where t is a Python array of size 5, and each element corresponds, in order, to the following characteristics: Neuroticism, Extraversion, Openness, Agreeableness, Conscientiousness with values ranging from 0 to 1."
 

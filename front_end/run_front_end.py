@@ -5,13 +5,14 @@ from front_end.settings import *
 from front_end.map import *
 from front_end.pygame_functions import *
 
-def run_front_end(env, barrier=None):
+def run_front_end(env,lock, barrier=None):
     # Wait for the other processes to finish setting up
     if barrier != None:
         barrier.wait()
 
     # initialize pygame and create window
     pygame.init()
+
     clock = pygame.time.Clock()
     
     screen = pygame.display.set_mode((screen_width, screen_height))
@@ -48,13 +49,12 @@ def run_front_end(env, barrier=None):
             loading_screen(screen,debut)
             debut = True
             for person in agents:
-                if len(commands[person.name]) < 3:
+                if len(commands[person.name]) < 10:
                     debut = False
                     break
         elif start_status == False:
             loading_screen(screen,debut)
-            if pygame.mouse.get_pressed()[0]:
-                start_status = start_screen(pygame.mouse.get_pos())
+            start_status = start_screen()
 
         else:   
 
@@ -67,10 +67,11 @@ def run_front_end(env, barrier=None):
             agents.update(commands, env.front_end_time)
             env.front_end_time += 1/FPS
 
-            menu.update() # Update the menu 
+            menu.update(events) # Update the menu 
 
             buttons.update(camera) # Update the buttons (follow the agents)
-
+            
+            
             camera.update(events)# Update the camera (follow the agents or move with the arrow keys and zoom with the mouse wheel)
 
             effects.update()
@@ -79,7 +80,7 @@ def run_front_end(env, barrier=None):
             
             camera.draw(agents, buttons, screen) # Draw the map, the agents (Tasks) and the buttons
 
-            menu.draw() # Draw the menu
+            menu.draw(lock) # Draw the menu
             
             # Draw the time
             Draw_time(env.front_end_time, env.front_end_time_velocity, screen, clock.get_fps())

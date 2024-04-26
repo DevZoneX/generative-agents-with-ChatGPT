@@ -19,6 +19,10 @@ class Emotion:
         self.weakening_function = 0
 
     def print_emotions(self):
+        '''
+        INPUT: None
+        OUTPUT: the current emotional state of the agent in a string format
+        '''
         emotions = ["Joy", "Sadness", "Fear", "Love", "Hate",
                     "Pride", "Shame"]  # Assuming these are the emotions
         desc = ', '.join(f"{emotion} {value}" for emotion,
@@ -26,13 +30,22 @@ class Emotion:
         return ("Here is its current emotional state: (0 means the emotion is not felt, 10 means it is felt to the maximum) - " + desc + ".")
 
     def update_emotion_resp(self, response, agent_name):
+        '''
+        INPUT: response, agent_name
+        OUTPUT: update the emotional state of the agent after an event STEP 1
+        '''
+
         if response == 'False':
             return False
         else:
             lines = response.split('\n')
             if len(lines) > 1:
-                new_values = [float(x)
-                              for x in lines[1].strip('[]').split(',')]
+                new_values = []
+                for x in lines[1].strip('[]').split(','):
+                    try:
+                        new_values.append(float(x))
+                    except ValueError:
+                        print(f"La valeur '{x}' n'est pas un float valide.")
                 if any(not 0 <= new_val <= 10 for new_val in new_values):
                     print("Values must be between 0 and 10.")
                     return False
@@ -50,11 +63,14 @@ class Emotion:
                 with open('back_end/memory/current_emotion.json', 'w') as file:
                     json.dump(data, file, indent=4)
                 self.emotions = new_values  # Update the current state
+                print(self.print_emotions())
                 return True
 
-    # Given the agent and an event. If the importance of an event is above the threshold, this fonction update the emotion.
-
     def update_emotion(self, agent, event):
+        '''
+        INPUT: agent, event
+        OUTPUT: update the emotional state of the agent after an event STEP 2
+        '''
         file = open('back_end/prompts/emotion.txt', 'r')
         prompt_emotion = file.read().replace("#agent_name#", agent.name).replace("#event#", event).replace(
             "#emotionnal_state#", str(agent.print_emotions())).replace("#personality#", str(agent.print_personality()))

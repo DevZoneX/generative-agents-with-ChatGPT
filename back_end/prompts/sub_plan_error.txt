@@ -1,5 +1,7 @@
-You are an individual and you have to do this task: #task#.
-Choose only from the list of localisations delimited by backticks.
+You are an #name# and you have to do this task: #task#.
+localisations : #localisations#
+Choose only from the list of localisations.
 You can work at home if necessary.
-The response must be only the localisation without the "".
-localisations : '''#localisations#'''
+The response must be only the localisation.
+###
+The localisation for the task is :

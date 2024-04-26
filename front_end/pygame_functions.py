@@ -72,11 +72,15 @@ def loading_screen(screen,debut):
         screen.blit(welcome_img, (0, 0))
 
 
-def start_screen(mouse_pos):
-    x, y = mouse_pos
-    if 537 < x < 853 and 574 < y < 736:
-        return True
+def start_screen():
+    x, y = pygame.mouse.get_pos()
+    width_scale = screen_width / 1280
+    height_scale = screen_height / 720
+    if 464 * width_scale < x < 761 * width_scale and 503 * height_scale < y < 657 * height_scale:
+        if pygame.mouse.get_pressed()[0]:
+            return True 
     return False
+
 
 
     

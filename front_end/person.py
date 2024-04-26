@@ -12,7 +12,7 @@ class Person(pygame.sprite.Sprite):
         self.y = y
         self.image = image
         self.map = map
-        self.current_task = None # current task of the agent
+        self.current_task = "Idle" # current task of the agent
         self.begin_execution = 0  # time when the execution begins
         self.execute_duration = 0  # duration of execution
         self.walk_duration = 0  # duration of walking
@@ -72,7 +72,9 @@ class Person(pygame.sprite.Sprite):
         font = pygame.font.SysFont(None, int(tile_height))
 
         if self.current_task != None:
-            task = self.current_task   
+            task = self.current_task
+            if len(task) > 20:
+                task = task[:20] + "..."   
 
             # Get agent position
             agent_x, agent_y = self.get_position()
@@ -142,7 +144,7 @@ class Person(pygame.sprite.Sprite):
         # if there is no current task, or the execution duration is completed
         # Get the next command from the list
         if len(commands[self.name]) == 0:
-            self.current_status = "Idle"
+            self.current_status = "Idle" if self.current_status != "Sit" else "Sit"
             return
         else:
             command = commands[self.name].pop(0)

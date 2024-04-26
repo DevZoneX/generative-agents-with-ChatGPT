@@ -35,15 +35,15 @@ def get_completion(messages, model="gpt-3.5-turbo-1106", max_tokens=500, tempera
                 max_tokens=max_tokens,
             )
 
-    elif ai == "mistral":
+    # elif ai == "mistral":
 
-        messages = [ChatMessage(
-            role=message["role"], content=message["content"]) for message in messages]
-        response = mistral_client.chat(
-            messages=messages,
-            model="mistral-small",
-            temperature=temperature,
-        )
+    #     messages = [ChatMessage(
+    #         role=message["role"], content=message["content"]) for message in messages]
+    #     response = mistral_client.chat(
+    #         messages=messages,
+    #         model="mistral-small",
+    #         temperature=temperature,
+    #     )
     assistant_reply = response.choices[0].message.content
     return assistant_reply
 
@@ -84,12 +84,8 @@ def add_episodic(agent, event, time, importance):
     file_dir = f"back_end/memory/{agent.name}/episodic.json"
     embeddings = get_embedding(event)
 
-    if agent.first_time:
-        data = {"embeddings": {}, "node": []}
-        agent.first_time = False
-    else:
-        with open(file_dir, 'r') as json_file:
-            data = json.load(json_file)
+    with open(file_dir, 'r') as json_file:
+        data = json.load(json_file)
 
     data["embeddings"][event] = embeddings.tolist()
     data["node"].append([time, event, importance])
@@ -109,26 +105,27 @@ def retrieve_episodic(agent, context, n=5):
     embeddings = data["embeddings"]
     node = np.array(data["node"])
     context_embeddings = get_embedding([context])
+    if node.size == 0:
+        return [("", "")]
 
     similarity = cosine_similarity(
         list(embeddings.values()), context_embeddings)
 
-
     index = np.argsort(similarity, axis=0)[-n:]
 
     # Adjust n to the actual number of elements that can be retrieved
-    n = min(len(index),n)
+    n = min(len(index), n)
 
     results = [(node[i][1], node[i][2]) for i in range(n)]
 
     return results
 
 
-def visualize_embeddings(file_path):
+def visualize_embeddings(file_path, threshold=0.65):
     """
     Creates and displays a graph visualizing the cosine similarity between multiple event embeddings.
     """
-    threshold = 0.3
+
     try:
         with open(file_path + 'episodic.json', 'r') as json_file:
             data = json.load(json_file)
@@ -151,10 +148,13 @@ def visualize_embeddings(file_path):
             event_j = event_names[j]
             similarity = cosine_similarity([embeddings[event_i]], [
                                            embeddings[event_j]])[0][0]
-            similarity = round(similarity, 2)
-            G.add_edge(event_i, event_j, weight=similarity)
+
+            if similarity > threshold:
+                G.add_edge(event_i, event_j, weight=round(similarity, 2))
 
     pos = nx.spring_layout(G)
+
+    plt.figure(figsize=(15, 10))
 
     # Dessinez seulement les nœuds
     nx.draw_networkx_nodes(G, pos, node_color='skyblue', node_size=2500)

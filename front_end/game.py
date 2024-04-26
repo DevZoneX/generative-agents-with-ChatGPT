@@ -108,46 +108,62 @@ class Person_menu(pygame.sprite.Sprite):
         self.text_color_selected = red
         self.onglets = ["identity", "memory", "chat"]
         self.selected = "identity"
+        self.scroll = 0
 
-    def update(self):
+    def update(self,events):
+        pos = pygame.mouse.get_pos()
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN and self.camera.target != None and pos[0] > screen_width - 48*5:
+                if event.button == 4:
+                    self.scroll -= 1
+                if event.button == 5:
+                    self.scroll += 1
+            self.scroll = max(0, self.scroll)
 
 
         if self.camera.target != None:
-            pos = pygame.mouse.get_pos()
             # get the onglet that is clicked on
             for onglet in self.onglets:
                 if self.get_onglet(onglet)[1].collidepoint(pos):
                     if pygame.mouse.get_pressed()[0]:
                         self.selected = onglet
+                        self.scroll = 0
                         break
 
-    def get_text(self, onglet):
+    def get_text(self, onglet,lock):
         # get the text of the onglet from json and put it in a rect
         font = pygame.font.SysFont(None, 18)
         texts = []
         rects = []
         if onglet == "identity":
             file_location = "back_end/memory/identity.json"
+            lock.acquire()
             with open(file_location) as json_file:
-                data = json.load(json_file)[self.camera.target.name]
-                json_file
+                data = {"current task": self.camera.target.current_task}
+                data.update(json.load(json_file)[self.camera.target.name])
+            lock.release()
+
             for key in data:
                 if not key in ["personnality", "personnality explanation", "initial_position"]:
-                    texts += decompose_text("- "+ key + ": " + str(data[key]),40)
+                    texts += decompose_text(key.upper() + ": " + str(data[key]),40)
         elif onglet == "memory":
             file_location = f"back_end/memory/{self.camera.target.name}/episodic.json"
+            lock.acquire()
             with open(file_location) as json_file:
                 data = json.load(json_file)
-                json_file
+            lock.release()
             data = data["node"]
             for i in range(len(data)):
                 texts += decompose_text(f'{data[i][0]}: {data[i][1]}',40)
         elif onglet == "chat":
+            lock.acquire()
             file_location = f"back_end/memory/discussion.json"
             with open(file_location) as json_file:
                 data = json.load(json_file)[self.camera.target.name]["current_discussion"]
-                json_file
-            texts = decompose_text(data,40)
+                data = data.split("\n")
+            lock.release()
+            for i in range(1,len(data)):
+                texts += decompose_text(data[i],40)
         
         
         for i in range(len(texts)):
@@ -175,17 +191,22 @@ class Person_menu(pygame.sprite.Sprite):
 
     
     
-    def draw(self):
+    def draw(self,lock):
+        # draw the menu with the onglets and the text of the selected onglet and with the scroll
         if self.camera.target != None:
             self.screen.blit(self.image, self.rect)
             image = self.camera.target.image
             self.screen.blit(image, (self.rect.x +24, self.rect.y -24 ))
             text = self.font.render(self.camera.target.name, True, self.text_color)
             self.screen.blit(text, (self.rect.x + 100, self.rect.y + 30))
-
+            count = 0
             for i in range(len(self.onglets)):
                 text , rect = self.get_onglet(self.onglets[i])
                 self.screen.blit(text, rect)
                 if self.selected == self.onglets[i]:
-                    for text, rect in zip(self.get_text(self.onglets[i])[0], self.get_text(self.onglets[i])[1]):
-                        self.screen.blit(text, rect)
+                    for text, rect in zip(self.get_text(self.onglets[i],lock)[0], self.get_text(self.onglets[i],lock)[1]):
+                        if count >= self.scroll:
+                            self.screen.blit(text, rect.move(0, -20 * self.scroll))
+                        count += 1
+                    
+                        

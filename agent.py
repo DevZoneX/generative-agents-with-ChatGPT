@@ -1,8 +1,11 @@
 from back_end.agent.plan import create_initial_plan, create_sub_plan, get_object_for, insert_discussion
-from back_end.agent.functions import get_identity, think, change_current_event, get_current_event, filter_sensory_memory, perceive, interact, get_relationship, get_discussion, delete
+from back_end.agent.get import get_identity, get_current_event, change_current_event, get_relationship
+from back_end.agent.memory_extraction import think
+from back_end.agent.detect import perceive, interact
+from back_end.agent.discussion import get_discussion
+from back_end.agent.functions import filter_sensory_memory, delete, end_of_the_day
 from back_end.useful_functions import add_episodic, retrieve_episodic
 from back_end.agent.execute import execute_sub_task
-from back_end.long_term_memory.epis_mem import EpisodicMemoryGraph
 from back_end.long_term_memory.emotion import Emotion
 from back_end.long_term_memory.personality import Personality
 
@@ -17,9 +20,6 @@ class Agent:
         self.first_time = True
         # The sensory memory of the agent
         self.sensory_memory = set()
-
-        # The long term memory of the agent
-        # self.long_term_memory = EpisodicMemoryGraph()
 
         # The emotions and the personality of the agent
         self.emotion = Emotion(self.name)
@@ -38,6 +38,9 @@ class Agent:
 
     def delete(self):
         return delete(self.name)
+
+    def think(self, event):
+        return think(self, event)
 
     def change_current_event(self, event, lock):
         return change_current_event(self.name, event, lock)
@@ -96,8 +99,8 @@ class Agent:
     def retrieve_episodic(self, context, n):
         return retrieve_episodic(self, context, n)
 
-    def update_emotion(self, event):
-        return self.emotion.update_emotion(self, event)
+    def update_emotion(self, lock):
+        return self.emotion.update_emotion(self, self.get_current_event(lock))
 
     def update_personality(self, event):
         return self.personality.update_personality(self, event)
@@ -107,3 +110,6 @@ class Agent:
 
     def print_personality(self):
         return self.personality.print_personality()
+
+    def end_of_the_day(self, env):
+        return end_of_the_day(self, env)

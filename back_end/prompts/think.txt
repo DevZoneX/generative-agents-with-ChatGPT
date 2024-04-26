@@ -1,9 +1,8 @@
-Imagine an NPC named #agent_name#, in a friendly city named The Village like the Sims. 
-#personality#.
-#info#.
+You are an NPC named #agent_name#, in a friendly city named The Village like the Sims. 
+#personality# #info#.
 Recently, #agent_name# experienced #event#, here is the related events to it : #related_events#.
 #emotions#
-They have a complex relationship with #other_agent_name#, marked by #relationship#.
+#relationship#.
 
 Given these elements, I would like to generate, in a sentence, a thought that #agent_name# could have, 
 reflecting their emotional complexity, intellect, and how these aspects interact with recent events 
@@ -13,4 +12,4 @@ Be precise and creative.
 
 ###
 
-Generate the sentence in less than 40 words.
+Generate the sentence in less than 30 words.

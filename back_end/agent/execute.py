@@ -1,18 +1,14 @@
 import time
 import json
-from back_end.agent.functions import calculate_direction, search, launch_discussion, hear_discussion
+from back_end.agent.functions import calculate_direction
+from back_end.agent.discussion import launch_discussion, hear_discussion
+from back_end.agent.detect import search
 
 
 def move(agent, direction, environment):
     '''
-    INPUT:  
-
-    agent
-    direction : "UP" / "DOWN" / "RIGHT" / "LEFT"
-    environment
-
-    OUTPUT: 
-    in class environment, the agent moves by one step in the direction
+    INPUT: agent, direction : "UP" / "DOWN" / "RIGHT" / "LEFT", environment
+    OUTPUT: in class environment, the agent moves by one step in the direction
     '''
 
     map = environment.map
@@ -41,16 +37,8 @@ def move(agent, direction, environment):
 
 def move_agent_to(agent, path, environment, step_time, lock):
     '''
-    INPUT:  
-
-    agent
-    path
-    environment
-    step_time
-
-    OUTPUT: 
-
-    in class environment, the agent moves from its current position to the destination
+    INPUT: agent, path, environment, step_time
+    OUTPUT: in class environment, the agent moves from its current position to the destination
     '''
     # Create a reference time for the whole path
     time_0 = time.time()
@@ -83,7 +71,7 @@ def move_agent_to(agent, path, environment, step_time, lock):
 
                 # If I was seen by an agent
                 if agent_asking_me != None:
-                    
+
                     hear_discussion(agent, agent_asking_me, environment, lock)
 
                 # If I was not seen by any agent
@@ -99,6 +87,7 @@ def move_agent_to(agent, path, environment, step_time, lock):
 
 def execute_sub_task(agent, sub_task, environment, index_of_task, index_of_sub_task, lock):
     '''
+    INTPUT: agent, sub_task, environment, index_of_task, index_of_sub_task
     OUTPUT:
     if the agent is already at the destination localisation:
         the agent performs the task
@@ -117,8 +106,12 @@ def execute_sub_task(agent, sub_task, environment, index_of_task, index_of_sub_t
     if len(localisation.split(':')) == 2:
         # Get the object to add to the localisation if it does not exist
         objects = environment.map.localisations[localisation]
-        destination_localisation = localisation + ':' + \
-            agent.get_object_for(task, localisation, list(objects))
+        object_requested = agent.get_object_for(
+            task, localisation, list(objects))
+        if (object_requested):
+            destination_localisation = localisation + ':' + object_requested
+        else:  # object = None
+            destination_localisation = localisation
 
         # Add it to the plan file
         with open(agent.file_path + 'plan.json', 'r') as file:
@@ -132,7 +125,11 @@ def execute_sub_task(agent, sub_task, environment, index_of_task, index_of_sub_t
     else:
         destination_localisation = localisation
 
-    object = destination_localisation.split(':')[2]
+    try:
+        object = destination_localisation.split(':')[2]
+    except IndexError:
+        object = None
+
     map = environment.map
 
     # Clear the sensory memory
@@ -167,7 +164,8 @@ def execute_sub_task(agent, sub_task, environment, index_of_task, index_of_sub_t
     step_time = 0.25
 
     # Move the agent to the destination localisation in the environment
-    time_spent_in_path = move_agent_to(agent, path, environment, step_time, lock)
+    time_spent_in_path = move_agent_to(
+        agent, path, environment, step_time, lock)
 
     # add the new event to the map (to case_details)
     cur_event = agent.get_current_event(lock)
@@ -209,10 +207,10 @@ def execute_sub_task(agent, sub_task, environment, index_of_task, index_of_sub_t
     # Add the new event to the list of configurations to be displayed
     task_time = (task_duration - step_time*length_path) * \
         environment.front_back_ratio
-    if object in {"Chair left side", 'Table left side'}:
-        command = 'SIT LEFT'
-    elif object in {"Chair right side", 'Table right side'}:
+    if object in {"Chair left side", 'Table left side', "Bed James side", 'Console'}:
         command = 'SIT RIGHT'
+    elif object in {"Chair right side", 'Table right side', "Bed John side", "Bed Elsa side", "Bed Tom side", "Bed Alice side", "Bed Sara side"}:
+        command = 'SIT LEFT'
     else:
         command = 'STAY'
 

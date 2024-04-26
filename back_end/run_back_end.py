@@ -46,6 +46,7 @@ def run_back_end(env, agent, initial_plan, barrier, lock):
         if index_of_task == number_of_tasks:
             index_of_day += 1
             index_of_task = 0
+            day_summary = agent.end_of_the_day(env, lock)
             initial_plan = agent.create_initial_plan()
             number_of_tasks = len(initial_plan)-1
 
